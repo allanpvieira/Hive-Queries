@@ -1,0 +1,68 @@
+1.
+// Cria as pastas dentro do hdfs
+hadoop fs -mkdir /user/cloudera/allan /user/cloudera/allan/airports /user/cloudera/allan/flights
+
+// Move os arquivos descompactados para o hdfs
+hdfs dfs -copyFromLocal /home/cloudera/allan/aeroportos/airports.csv /user/cloudera/allan/airports
+hdfs dfs -copyFromLocal /home/cloudera/allan/aeroportos/2008.csv /user/cloudera/allan/flights
+
+//Executa o hive
+Hive
+
+CREATE TABLE airports(
+   name STRING,
+   country STRING,
+   area_code INT,
+   code STRING)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ',';
+
+CREATE TABLE flight_data(
+   year INT,
+   month INT,
+   day INT,
+   day_of_week INT,
+   dep_time INT,
+   crs_dep_time INT,
+   arr_time INT,
+   crs_arr_time INT,
+   unique_carrier STRING,
+   flight_num INT,
+   tail_num STRING,
+   actual_elapsed_time INT,
+   crs_elapsed_time INT,
+   air_time INT,
+   arr_delay INT,
+   dep_delay INT,
+   origin STRING,
+   dest STRING,
+   distance INT,
+   taxi_in INT,
+   taxi_out INT,
+   cancelled INT,
+   cancellation_code STRING,
+   diverted INT,
+   carrier_delay STRING,
+   weather_delay STRING,
+   nas_delay STRING,
+   security_delay STRING,
+   late_aircraft_delay STRING
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ',';
+
+LOAD DATA INPATH
+'/user/cloudera/allan/airports/airports.csv'
+OVERWRITE INTO TABLE airports;
+
+LOAD DATA INPATH
+'/user/cloudera/allan/flights/2008.csv'
+OVERWRITE INTO TABLE flight_data;
+
+-- Média de atraso de voos do aeroporto 'SFO' no mês de janeiro, independente do ano
+2. select avg(arr_delay) from flight_data where origin='SFO' and month=1;
+
+3. SET hive.auto.convert.join=false; -- Comando necessário caso esteja definido como true
+
+-- Média de atraso de voos de todos os  aeroportos no mês de janeiro de 2008
+select b.name, avg(arr_delay) from flight_data a join airports b on (a.origin=b.code) where a.month=1 and a.year=2008 group by b.name;
